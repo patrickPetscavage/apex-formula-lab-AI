@@ -1,0 +1,36 @@
+import assert from 'node:assert/strict';
+import {simulate,sampleLap} from '../lib/sim/physics';
+import {DEFAULT_SETUP,validateSaved,coefficients} from '../lib/sim/setup';
+import {TRACK,TRACK_LENGTH} from '../lib/sim/track';
+import {PARTS} from '../lib/components';
+const base=simulate(DEFAULT_SETUP);
+assert.deepEqual(base,simulate(DEFAULT_SETUP));
+assert.ok(base.lapTime>20&&base.lapTime<300);assert.ok(base.speed.every(v=>Number.isFinite(v)&&v>0));
+assert.ok(base.residual<1e-6);assert.ok(Math.abs(base.sectors.reduce((a,b)=>a+b)-base.lapTime)<1e-8);
+assert.ok(Math.abs(sampleLap(base,base.lapTime).s-TRACK_LENGTH)<1e-7);
+assert.ok(Math.abs(sampleLap(base,0).x-sampleLap(base,base.lapTime).x)<1e-7);
+for(let i=0;i<TRACK.length;i++){
+ const dt=base.time[i+1]-base.time[i],dist=base.speed[i]*dt+.5*base.ax[i]*dt*dt;
+ assert.ok(Math.abs(dist-TRACK[i].ds)<1e-7);
+ const c=coefficients(DEFAULT_SETUP),max=c.mu*(9.81+.5*1.225*c.clA*base.speed[i]**2/c.mass);assert.ok(base.ay[i]<=max+1e-5);
+}
+assert.ok(simulate({...DEFAULT_SETUP,fuel:100}).lapTime>base.lapTime);
+assert.ok(simulate({...DEFAULT_SETUP,power:350}).lapTime>base.lapTime);
+assert.ok(simulate({...DEFAULT_SETUP,tire:'soft'}).lapTime<base.lapTime);
+const straight=TRACK.map(p=>({...p,k:0}));const lowDrag=simulate({...DEFAULT_SETUP,frontWing:8,rearWing:8},straight),highDrag=simulate({...DEFAULT_SETUP,frontWing:32,rearWing:36},straight);
+assert.ok(highDrag.topSpeed<lowDrag.topSpeed);assert.ok(highDrag.lapTime>lowDrag.lapTime);
+assert.notEqual(simulate({...DEFAULT_SETUP,brakeBias:65}).lapTime,base.lapTime);
+assert.notEqual(simulate({...DEFAULT_SETUP,finalDrive:6.5}).lapTime,base.lapTime);
+assert.notEqual(simulate({...DEFAULT_SETUP,camber:-4,toe:.3}).lapTime,base.lapTime);
+assert.throws(()=>validateSaved({version:1,name:'Bad',setup:{...DEFAULT_SETUP,power:9999}}));assert.throws(()=>validateSaved({version:1,name:'Bad',setup:{...DEFAULT_SETUP,fuel:NaN}}));assert.throws(()=>validateSaved({version:2,name:'Bad',setup:DEFAULT_SETUP}));assert.deepEqual(validateSaved(JSON.parse(JSON.stringify({version:1,name:'Round trip',setup:DEFAULT_SETUP}))).setup,DEFAULT_SETUP);
+assert.equal(new Set(PARTS.map(p=>p.id)).size,PARTS.length);
+console.log(JSON.stringify({checks:'passed',components:PARTS.length,baselineSeconds:base.lapTime,topSpeed:base.topSpeed,iterations:base.iterations,residual:base.residual,straightSpeed:{lowDrag:lowDrag.topSpeed,highDrag:highDrag.topSpeed}},null,2));
+import {CENTERLINE,SMOOTH_LINE,buildTrajectory,validateTrajectory,trajectoryKey} from '../lib/sim/trajectory';
+const smooth=buildTrajectory(SMOOTH_LINE),smoothLap=simulate(DEFAULT_SETUP,smooth,trajectoryKey(SMOOTH_LINE));
+assert.notEqual(smoothLap.lapTime,base.lapTime);assert.deepEqual(smooth,buildTrajectory(SMOOTH_LINE));
+assert.ok(smooth.every((p,i)=>Math.hypot(p.x-TRACK[i].x,p.z-TRACK[i].z)<=Math.max(TRACK[i].left,TRACK[i].right)-1.19999));
+const custom=validateTrajectory({...CENTERLINE,id:'custom',name:'Offset check',offsets:Array(12).fill(1.2)}),customPath=buildTrajectory(custom),customLap=simulate(DEFAULT_SETUP,customPath,trajectoryKey(custom));
+assert.notEqual(sampleLap(customLap,0).x,sampleLap(base,0).x);assert.ok(Math.abs(sampleLap(customLap,customLap.lapTime).s-customPath.reduce((s,p)=>s+p.ds,0))<1e-6);
+assert.throws(()=>validateTrajectory({...custom,offsets:[100]}));
+const old={...DEFAULT_SETUP} as Partial<typeof DEFAULT_SETUP>;delete old.finalDrive;delete old.frontWeight;delete old.cgHeight;assert.equal(validateSaved({version:1,name:'Legacy',setup:old}).setup.finalDrive,5.4);
+console.log({trajectories:'passed',smoothSeconds:smoothLap.lapTime,customSeconds:customLap.lapTime});

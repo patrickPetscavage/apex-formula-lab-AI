@@ -1,0 +1,14 @@
+import ts from 'typescript';import fs from 'node:fs';import os from 'node:os';import path from 'node:path';import {createRequire} from 'node:module';import assert from 'node:assert/strict';
+const req=createRequire(import.meta.url),tmp=fs.mkdtempSync(path.join(os.tmpdir(),'apex-scene-')),THREE=req('three');
+function compile(source,name){let code=ts.transpileModule(fs.readFileSync(source,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,esModuleInterop:true}}).outputText;code=code.replaceAll('require("three")',`require(${JSON.stringify(req.resolve('three'))})`).replaceAll('require("@/lib/sim/track")','require("./track.cjs")').replaceAll('require("./data/suzuka.json")',`require(${JSON.stringify(path.resolve('lib/sim/data/suzuka.json'))})`);fs.writeFileSync(path.join(tmp,name),code);}
+compile('lib/sim/track.ts','track.cjs');compile('components/lab/circuit.ts','circuit.cjs');
+const {TRACK,TRACK_LENGTH}=req(path.join(tmp,'track.cjs')),{createCircuit}=req(path.join(tmp,'circuit.cjs'));const {group}=createCircuit();group.updateMatrixWorld(true);
+assert.ok(Math.abs(TRACK_LENGTH-5807)<1e-6);assert.equal(TRACK.length,1161);assert.ok(TRACK.every(p=>p.left>2&&p.right>2&&Number.isFinite(p.grade)));
+assert.ok(TRACK[984].y-TRACK[509].y>7.5,'Crossing road levels must remain separate');
+const ray=new THREE.Raycaster();let minClear=Infinity,obstacles=[];
+for(let i=0;i<TRACK.length;i++){const p=TRACK[i],q=TRACK[(i+1)%TRACK.length];ray.set(new THREE.Vector3(p.x,p.y+.9,p.z),new THREE.Vector3(0,-1,0));ray.far=2;const hit=ray.intersectObject(group,true).find(h=>h.object.isMesh);assert.ok(hit,`Missing road support at ${i}`);const clearance=p.y+.9-hit.point.y;minClear=Math.min(minClear,clearance);assert.ok(clearance>.85,`Road obstructed vertically at ${i}: ${clearance}`);
+const delta=new THREE.Vector3(q.x-p.x,q.y-p.y,q.z-p.z);ray.set(new THREE.Vector3(p.x,p.y+.55,p.z),delta.clone().normalize());ray.far=delta.length();if(ray.intersectObject(group,true).some(h=>h.object.isMesh))obstacles.push(i);}
+assert.equal(obstacles.length,0,`Centerline collides with scene at ${obstacles.join(',')}`);
+const supports=[];group.traverse(o=>{if(o.userData.bridgeSupport)supports.push(new THREE.Box3().setFromObject(o));});assert.equal(supports.length,4);
+for(let i=0;i<TRACK.length;i++){const p=TRACK[i],q=TRACK[(i+1)%TRACK.length],heading=Math.atan2(q.x-p.x,q.z-p.z);for(const side of [-1,-.5,0,.5,1]){const width=side<0?p.left:p.right,point=new THREE.Vector3(p.x+Math.cos(heading)*width*side,p.y+.55,p.z-Math.sin(heading)*width*side);assert.ok(supports.every(box=>!box.containsPoint(point)),`Bridge support enters drivable corridor at ${i}`);}}
+console.log(JSON.stringify({scene:'passed',pathLength:TRACK_LENGTH,crossingClearance:TRACK[984].y-TRACK[509].y,minimumRoadClearance:minClear,centerlineObstacles:obstacles.length,bridgeSupportsOutsideCorridor:true}));fs.rmSync(tmp,{recursive:true});

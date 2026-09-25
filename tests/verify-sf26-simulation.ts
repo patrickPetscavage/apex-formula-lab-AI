@@ -1,0 +1,35 @@
+import assert from 'node:assert/strict';
+import {SF26_DEFAULT as S,SF26_MODEL_VERSION,validateSF26Setup,sf26Model,simulateSF26} from '../lib/sim/sf26Model';
+import {TRACK} from '../lib/sim/track';
+import {buildTrajectory,CENTERLINE,CORRIDOR} from '../lib/sim/trajectory';
+import {snapshot,validateExperiment,sections,saveRun,readHistory} from '../lib/sim/experiments';
+import {sampleMotion} from '../lib/sim/motion';
+import {simulate} from '../lib/sim/physics';
+import {DEFAULT_SETUP} from '../lib/sim/setup';
+const a=simulateSF26(S,TRACK,'centerline'),model=sf26Model(S);
+assert.equal(a.vehicleId,'sf26');assert.equal(a.modelVersion,SF26_MODEL_VERSION);assert.equal(a.suspension,undefined);assert.ok(a.residual<1e-7);
+assert.ok(Math.abs(simulate(DEFAULT_SETUP).lapTime-108.59340246833438)<1e-8);
+assert.equal(model.c.mass,795);assert.notEqual(a.lapTime,simulate(DEFAULT_SETUP).lapTime);
+const slower=simulateSF26({...S,power:250},TRACK,'centerline');assert.ok(slower.lapTime>a.lapTime);
+const heavy=simulateSF26({...S,dryMass:900},TRACK,'centerline');assert.ok(heavy.lapTime>a.lapTime);
+const grip=simulateSF26({...S,gripScale:1.1},TRACK,'centerline');assert.ok(grip.lapTime<a.lapTime);
+const moreWing=sf26Model({...S,frontClA:2.5,rearClA:3.2});assert.ok(moreWing.loads(60).total>model.loads(60).total);assert.ok(moreWing.loads(60).drag>model.loads(60).drag);
+assert.notEqual(sf26Model({...S,brakeBias:65}).braking(50,0),model.braking(50,0));
+assert.ok(sf26Model({...S,brakeLimit:2}).braking(70,0)<model.braking(70,0));
+assert.notEqual(sf26Model({...S,finalDrive:3.5}).engine(60).rpm,model.engine(60).rpm);
+assert.notEqual(sf26Model({...S,gear8:1.0}).ceiling,model.ceiling);
+for(const lap of [a,slower,heavy,grip,simulateSF26({...S,dryMass:950,fuel:100,power:200,gripScale:.7,frontClA:.7,rearClA:1,baseCdA:1.6,brakeLimit:2},TRACK,'extreme')]){
+ assert.ok(lap.speed.every(v=>Number.isFinite(v)&&v>0));assert.ok(lap.gear.every(v=>v>=1&&v<=8));
+ assert.ok(lap.telemetry.every(t=>Object.values(t).every(Number.isFinite)));
+ const m=sf26Model(validateSF26Setup(lap.setup));
+ lap.path.forEach((p,i)=>{const j=(i+1)%lap.path.length,v=lap.speed[i],next=lap.speed[j],accel=(Math.min(m.engine(v).power/(m.c.mass*Math.max(v,8)),Math.min(m.capacity(v,p.k).rear,m.capacity(v,lap.path[j].k).rear)/m.c.mass)-m.drag(v))-9.81*p.grade;assert.ok(lap.ax[i]<=accel+1e-5,'Acceleration constraint');const decel=Math.min(m.braking(v,p.k),m.braking(next,lap.path[j].k))+m.drag(next)+9.81*p.grade;assert.ok(-lap.ax[i]<=decel+1e-4,'Braking constraint');});
+}
+const path=buildTrajectory({...CENTERLINE,id:'custom',name:'Custom SF line',offsets:Array.from({length:24},(_,i)=>Math.sin(i)*2)}),custom=simulateSF26(S,path,'custom');
+path.forEach((p,i)=>{const c=CORRIDOR[i],o=(p.x-TRACK[i].x)*c.nx+(p.z-TRACK[i].z)*c.nz;assert.ok(o>=c.min-1e-8&&o<=c.max+1e-8);});
+const run=snapshot(custom,'SF run','Custom SF line'),copy=validateExperiment(JSON.parse(JSON.stringify(run)));assert.deepEqual(copy,run);
+const storage={v:'',getItem(){return this.v||null;},setItem(_key:string,value:string){this.v=value;}};saveRun(storage,run);assert.equal(readHistory(storage)[0].lap.lapTime,custom.lapTime);
+assert.throws(()=>validateExperiment({...run,vehicleId:'f2004'}));assert.throws(()=>validateSF26Setup(DEFAULT_SETUP));assert.throws(()=>validateSF26Setup({...S,power:Infinity}));assert.throws(()=>validateSF26Setup({...S,gear8:2}));
+const before=run.lap.setup.power;custom.setup.power=300;assert.equal(run.lap.setup.power,before);
+assert.ok(sections(a,a).every(r=>r.delta===0));assert.ok(Math.abs(sections(a,copy.lap).reduce((sum,r)=>sum+r.delta,0)-(copy.lap.lapTime-a.lapTime))<1e-8);
+const motion=sampleMotion(a,20);assert.equal(motion.steer,Math.atan(3.35*motion.curvature));assert.deepEqual(sampleMotion(a,20),motion);
+console.log({sf26Simulation:'passed',lapTime:a.lapTime,topSpeed:a.topSpeed,gears:[...new Set(a.gear)],checks:'dedicated parameters, input sensitivity, numerical limits, custom corridor, snapshot persistence, identity, comparison and animation dimensions'});
