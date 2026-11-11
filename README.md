@@ -2,6 +2,10 @@
 
 For the GitHub Pages website, follow [GITHUB_PAGES.md](GITHUB_PAGES.md) and use `pnpm build:pages`. The static entry retains Garage and adds Historical Data and Race Predictions through hash routes. Current vehicle/model details remain in [BUILD_3B.md](BUILD_3B.md).
 
+## Geographic circuits and graphics — 11 November 2026
+
+Open **2026 Circuits** for all 23 current calendar venues, source-mapped scenery, cached terrain context, quality settings and 1–4 physics ghosts. Suzuka pit/stand orientation is corrected in the original engineering scene too. Eight layouts remain provisional; road heights, widths and scenery are approximate. See [methods, accuracy, screenshots, performance and verification](docs/GRAPHICS_2026.md) and [full inventory](docs/2026_CIRCUIT_INVENTORY.md). No 2025+ observed telemetry was introduced.
+
 ## FastF1 historical research and regression scenarios
 
 Open **Historical Data** or **Race Predictions** from the garage. A strict pre-2025 ingestion/import pipeline, synchronized historical telemetry replay, experimental F2004 comparison/calibration, chronological ridge-regression evaluation and configurable independent ghost races are implemented. Raw datasets stay local by default. Actual session download currently requires local FastF1 authentication; no real-data evaluation is claimed until that succeeds. See [setup, methods, verification and limitations](docs/FASTF1.md).

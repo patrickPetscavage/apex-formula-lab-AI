@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import "./research.css";
+import "./atlas.css";
 
 export const metadata: Metadata = {
   title: "APEX / Formula Lab",

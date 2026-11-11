@@ -10,7 +10,7 @@ export default defineConfig({
   if(!id.startsWith(root)||!id.endsWith('.tsx'))return;
   return code
    .replace(/href="\/(apex-formula-lab-source\.zip|data\/[^"\s]+)"/g,(_,asset)=>`href="${base}${asset}"`)
-   .replace(/href="\/(history|predictions)?"/g,(_,route)=>`href="${base}${route?'#'+route:''}"`)
+   .replace(/href="\/(history|predictions|circuits)?"/g,(_,route)=>`href="${base}${route?'#'+route:''}"`)
    .replace(/(['"`])\/data\/fastf1\//g,(_,quote)=>`${quote}${base}data/fastf1/`);
  }}],
  resolve:{alias:[{find:'next/dynamic',replacement:root+'github-pages/dynamic.tsx'},{find:'@',replacement:root}]},

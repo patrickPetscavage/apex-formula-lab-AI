@@ -23,6 +23,8 @@ jobs:
       - uses: actions/configure-pages@v5
         id: pages
       - run: pnpm install --frozen-lockfile
+      - run: node node_modules/typescript/bin/tsc --noEmit
+      - run: node tests/run-typescript.mjs verify-geospatial
       - run: python3 scripts/package-source.py
       - run: pnpm build:pages
         env:
@@ -30,6 +32,7 @@ jobs:
       - run: pnpm test:pages
         env:
           PAGES_BASE_PATH: '${{ steps.pages.outputs.base_path }}/'
+      - run: node tests/verify-atlas-worker.mjs
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist-pages

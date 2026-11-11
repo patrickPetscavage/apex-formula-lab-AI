@@ -4,3 +4,5 @@
 - Three.js and RoomEnvironment: MIT, https://github.com/mrdoob/three.js/blob/dev/LICENSE . The installed package retains its copyright and license. No environment photographs are used.
 - React, Recharts, Lucide, UI primitives and starter dependencies retain their respective upstream licenses in node_modules after installation; pnpm-lock.yaml pins versions. No upstream license is replaced by this record.
 - All car meshes, carbon/asphalt texture generation and schematic scenery are original application code. No external car model, satellite imagery, track texture, logo or sponsor image is distributed.
+
+- 2026 atlas: © OpenStreetMap contributors, ODbL 1.0; source-derived roads, pit lines and building footprints are distributed with provenance in public/data/atlas-2026. NASA/USGS SRTM v3 elevation through Open Topo Data; EGM96 orthometric datum. Community route-guide attribution (bacinger/f1-circuits, MIT) and exact license are retained. See public/data/atlas-2026/NOTICE.md and docs/GRAPHICS_2026.md.

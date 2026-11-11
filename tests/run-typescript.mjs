@@ -1,3 +1,4 @@
+import {execFileSync} from 'node:child_process';
 import ts from 'typescript';import fs from 'node:fs';import os from 'node:os';import path from 'node:path';import {createRequire} from 'node:module';
 const req=createRequire(import.meta.url),tmp=fs.mkdtempSync(path.join(os.tmpdir(),'apex-tests-'));
 try{
@@ -8,5 +9,6 @@ try{
  code=code.replace(/require\("zod"\)/g,`require(${JSON.stringify(req.resolve('zod'))})`);
  fs.mkdirSync(path.dirname(dest),{recursive:true});fs.writeFileSync(dest,code);
  }
- for(const name of process.argv.slice(2))req(path.join(tmp,'tests',name+'.js'));
+ // Each suite owns mutable active-circuit state; do not leak it into the next suite.
+ for(const name of process.argv.slice(2))execFileSync(process.execPath,[path.join(tmp,'tests',name+'.js')],{stdio:'inherit'});
 }finally{fs.rmSync(tmp,{recursive:true,force:true});}

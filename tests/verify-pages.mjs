@@ -13,7 +13,7 @@ const scripts=files.map(f=>fs.readFileSync(root+'/assets/'+f,'utf8')).join('\n')
 const worker=files.find(f=>/^lap\.worker-/.test(f));assert.ok(worker);
 assert.ok(scripts.includes(base+'assets/'+worker),'Worker URL includes repository path');
 assert.ok(!scripts.includes('file:///'),'No build-machine URLs');
-for(const route of ['#history','#predictions'])assert.ok(scripts.includes(base+route),'Research navigation includes repository base and hash route');
+for(const route of ['#history','#predictions','#circuits'])assert.ok(scripts.includes(base+route),'Workspace navigation includes repository base and hash route');
 assert.ok(scripts.includes(base+'data/fastf1/index.json'),'Historical index stays under repository base');
 const research=files.find(f=>/^research\.worker-/.test(f));assert.ok(research,'Research worker is packaged');
 assert.ok(scripts.includes(base+'assets/'+research),'Research worker URL includes repository base');
