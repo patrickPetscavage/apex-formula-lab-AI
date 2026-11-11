@@ -3,26 +3,27 @@ import {requireSimulatedVehicle} from '../vehicleIdentity';
 import {validateSF26Setup,SF26_CAPABILITIES} from './sf26Model';
 import type {Lap} from './physics';
 import {validateSetup} from './setup';
-import {CORRIDOR} from './trajectory';
-import {TRACK,TRACK_LENGTH} from './track';
+import {makeCorridor} from './trajectory';
+import {TRACK,TRACK_LENGTH,ACTIVE_CIRCUIT,getCircuit,makeTrack} from './track';
 export const MODEL_VERSION='apex-qss-2b.1';
 export const TRACK_VERSION='suzuka-5807-v1';
 export const HISTORY_KEY='apex-experiments-v1';
-export const MAX_RUNS=8,MAX_HISTORY_CHARS=2200000;
+export const MAX_RUNS=8,MAX_HISTORY_CHARS=5000000;
 export type Experiment={vehicleId?:'f2004'|'sf26';schemaVersion:1;id:string;name:string;createdAt:string;modelVersion:string;trackVersion:string;trajectoryName:string;lap:Lap};
 type StorageLike=Pick<Storage,'getItem'|'setItem'>;
 const finite=(v:unknown):v is number=>typeof v==='number'&&Number.isFinite(v);
 function requireValue(ok:unknown,message:string):asserts ok{if(!ok)throw Error(message);}
 export function snapshot(lap:Lap,name:string,trajectoryName:string):Experiment{
- return structuredClone({schemaVersion:1,vehicleId:lap.vehicleId??'f2004',id:crypto.randomUUID(),name:name.trim().slice(0,80)||'Experiment',createdAt:new Date().toISOString(),modelVersion:lap.modelVersion??MODEL_VERSION,trackVersion:TRACK_VERSION,trajectoryName:trajectoryName.slice(0,100),lap});
+ return structuredClone({schemaVersion:1,vehicleId:lap.vehicleId??'f2004',id:crypto.randomUUID(),name:name.trim().slice(0,80)||'Experiment',createdAt:new Date().toISOString(),modelVersion:lap.modelVersion??MODEL_VERSION,trackVersion:lap.trackVersion??TRACK_VERSION,trajectoryName:trajectoryName.slice(0,100),lap});
 }
 export function validateExperiment(input:unknown):Experiment{
  requireValue(input&&typeof input==='object','Invalid experiment.');
- const e=input as Experiment,l=e.lap,n=TRACK.length;const vehicle=requireSimulatedVehicle(e.vehicleId);
- requireValue(e.schemaVersion===1&&e.trackVersion===TRACK_VERSION,'Unsupported experiment schema or track grid.');
+ const e=input as Experiment,l=e.lap,circuit=getCircuit(e.trackVersion),TRACK=makeTrack(circuit),CORRIDOR=makeCorridor(TRACK),n=TRACK.length;const vehicle=requireSimulatedVehicle(e.vehicleId);
+ requireValue(e.schemaVersion===1&&(!l?.circuitId||l.circuitId===circuit.id),'Unsupported experiment schema or track grid.');
  for(const k of ['id','name','createdAt','modelVersion','trajectoryName'] as const)requireValue(typeof e[k]==='string'&&e[k].length>0&&e[k].length<=120,'Invalid experiment metadata.');
  requireValue(Number.isFinite(Date.parse(e.createdAt)),'Invalid timestamp.');
  requireValue(l&&typeof l==='object','Missing lap.');
+ requireValue(!l.trackVersion||l.trackVersion===e.trackVersion,'Lap and experiment track versions differ.');
  const checkedSetup=vehicle==='sf26'?validateSF26Setup(l.setup):validateSetup(l.setup);
  requireValue((l.vehicleId??'f2004')===vehicle,'Vehicle identity mismatch.');
  if(vehicle==='sf26'){
@@ -76,11 +77,14 @@ export function saveRun(storage:StorageLike,run:Experiment):Experiment[]{
 }
 export function removeRun(storage:StorageLike,id:string):Experiment[]{const next=readHistory(storage).filter(r=>r.id!==id);storage.setItem(HISTORY_KEY,JSON.stringify(next));return next;}
 export function stationSample(l:Lap,station:number){
+ const TRACK=makeTrack(getCircuit(l.trackVersion??TRACK_VERSION)),TRACK_LENGTH=TRACK.reduce((s,p)=>s+p.ds,0);
  const s=Math.max(0,Math.min(TRACK_LENGTH,station));let i=0;while(i<TRACK.length-1&&TRACK[i].s+TRACK[i].ds<s)i++;
  const u=(s-TRACK[i].s)/TRACK[i].ds,d=l.path[i].ds*u,v=Math.sqrt(Math.max(0,l.speed[i]**2+2*l.ax[i]*d));
  return {i,speed:v,time:l.time[i]+2*d/(l.speed[i]+v)};
 }
 export function sections(a:Lap,b:Lap,count=12){
+ if((a.trackVersion??TRACK_VERSION)!==(b.trackVersion??TRACK_VERSION))throw Error('Section deltas require the same circuit.');
+ const TRACK=makeTrack(getCircuit(a.trackVersion??TRACK_VERSION)),TRACK_LENGTH=TRACK.reduce((s,p)=>s+p.ds,0);
  return Array.from({length:count},(_,i)=>{
   const start=i*TRACK_LENGTH/count,end=(i+1)*TRACK_LENGTH/count;
   const stats=(l:Lap)=>{const first=stationSample(l,start),last=stationSample(l,end),speeds=[first.speed,last.speed],brakes:number[]=[];
@@ -91,6 +95,7 @@ export function sections(a:Lap,b:Lap,count=12){
 }
 export function samePath(a:Lap,b:Lap){return a.path.length===b.path.length&&a.path.every((p,i)=>p.x===b.path[i].x&&p.y===b.path[i].y&&p.z===b.path[i].z&&p.ds===b.path[i].ds);}
 export function telemetryCSV(run:Experiment){
+ const TRACK=makeTrack(getCircuit(run.trackVersion));
  const l=run.lap,header='reference_station_m,path_distance_m,time_s,speed_kmh,gear,rpm,throttle_fraction,brake_fraction,longitudinal_g,lateral_g,combined_g,steering_magnitude_deg,front_aero_N,rear_aero_N,downforce_N,drag_N,grip_utilization_fraction,lateral_offset_m,x_m,y_m,z_m';
  const extra=l.suspension?['fl_N','fr_N','rl_N','rr_N','front_transfer_N','rear_transfer_N','fl_compression_mm','fr_compression_mm','rl_compression_mm','rr_compression_mm','heave_mm','pitch_deg','roll_deg','inside_margin_N','validity_warning_bits']:[];
  return [[header,...extra].join(','),...TRACK.map((p,i)=>{const t=l.telemetry[i],q=l.path[i];return [p.s,q.s,l.time[i],l.speed[i]*3.6,l.gear[i],t.rpm,t.throttle,t.brake,l.ax[i]/9.81,l.ay[i]/9.81,Math.hypot(l.ax[i],l.ay[i])/9.81,t.steering,t.frontAero,t.rearAero,t.downforce,t.drag,t.utilization,t.offset,q.x,q.y,q.z,...(l.suspension?SUSPENSION_KEYS.map(k=>l.suspension!.samples[i][k]):[])].join(',');})].join('\n');

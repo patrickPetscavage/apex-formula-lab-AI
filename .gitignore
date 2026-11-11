@@ -46,5 +46,7 @@ next-env.d.ts
 /work/
 
 *.tsbuildinfo
-
+/.fastf1-cache/
+/data-local/
+__pycache__/
 /dist-pages/

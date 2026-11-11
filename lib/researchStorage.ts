@@ -1,0 +1,8 @@
+import {validateArchive,type HistoricalArchive} from './fastf1';
+const DATABASE='apex-historical-research-1';
+export async function researchStore(action:'get'|'put',key:string,value?:unknown):Promise<unknown>{
+ return new Promise((resolve,reject)=>{const request=indexedDB.open(DATABASE,1);request.onupgradeneeded=()=>request.result.createObjectStore('records');request.onerror=()=>reject(request.error??Error('Browser storage unavailable'));request.onsuccess=()=>{const db=request.result;const tx=db.transaction('records',action==='put'?'readwrite':'readonly'),store=tx.objectStore('records'),op=action==='put'?store.put(value,key):store.get(key);let result:unknown;op.onsuccess=()=>{result=op.result;};tx.oncomplete=()=>{db.close();resolve(result);};tx.onerror=()=>{db.close();reject(tx.error??Error('Storage transaction failed'));};tx.onabort=()=>{db.close();reject(tx.error??Error('Storage transaction aborted'));};};});
+}
+export async function readArchives(){const input=await researchStore('get','archives');if(input===undefined)return [];if(!Array.isArray(input)||input.length>100)throw Error('Invalid stored historical library');return input.map(validateArchive);}
+export async function saveArchives(a:HistoricalArchive[]){if(a.length>100)throw Error('100-session browser library limit; export datasets before replacing');await researchStore('put','archives',a.map(validateArchive));}
+export function downloadResearch(name:string,value:unknown){const url=URL.createObjectURL(new Blob([JSON.stringify(value)],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}

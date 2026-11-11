@@ -13,6 +13,14 @@ const scripts=files.map(f=>fs.readFileSync(root+'/assets/'+f,'utf8')).join('\n')
 const worker=files.find(f=>/^lap\.worker-/.test(f));assert.ok(worker);
 assert.ok(scripts.includes(base+'assets/'+worker),'Worker URL includes repository path');
 assert.ok(!scripts.includes('file:///'),'No build-machine URLs');
+for(const route of ['#history','#predictions'])assert.ok(scripts.includes(base+route),'Research navigation includes repository base and hash route');
+assert.ok(scripts.includes(base+'data/fastf1/index.json'),'Historical index stays under repository base');
+const research=files.find(f=>/^research\.worker-/.test(f));assert.ok(research,'Research worker is packaged');
+assert.ok(scripts.includes(base+'assets/'+research),'Research worker URL includes repository base');
+const researchReplies=[],researchSelf={postMessage:r=>researchReplies.push(r)};
+vm.runInNewContext(fs.readFileSync(root+'/assets/'+research,'utf8'),{self:researchSelf,Math,structuredClone},{timeout:2000});
+researchSelf.onmessage({data:{id:99,kind:'train',archives:[{year:2025}]}});
+assert.equal(researchReplies[0].id,99);assert.ok(researchReplies[0].error,'Future data rejected by shipped Pages research worker');
 for(const asset of ['apex-formula-lab-source.zip','data/suzuka/NOTICE.md','data/suzuka/Suzuka.csv','data/suzuka/derived-track.json']){assert.ok(scripts.includes(base+asset));assert.ok(fs.existsSync(root+'/'+asset));}
 const replies=[],self={postMessage:r=>replies.push(r)};
 vm.runInNewContext(fs.readFileSync(root+'/assets/'+worker,'utf8'),{self,Math},{timeout:2000});
@@ -24,3 +32,4 @@ const sf={frontWing:0,rearWing:0,rideHeight:35,fuel:25,ballast:0,power:380,tire:
 self.onmessage({data:{id:2,vehicleId:'sf26',setup:sf,trajectory}});
 assert.ok(!replies[1].error,replies[1].error);assert.equal(replies[1].lap.vehicleId,'sf26');assert.ok(Math.abs(replies[1].lap.lapTime-126.71084397032935)<1e-8);
 console.log('Pages passed: static entry, repository-prefixed assets/downloads/worker, F2004 and SF-26 regression laps.');
+

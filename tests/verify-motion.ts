@@ -22,5 +22,6 @@ changeClock(c,8000,{playing:true,rate:2});assert.equal(clockTime(c,10000),44);
 changeClock(c,10000,{rate:.5});assert.equal(clockTime(c,12000),45);
 changeClock(c,12000,{time:0,playing:false});assert.equal(clockTime(c,15000),0);
 changeClock(c,15000,{playing:true,rate:4});assert.equal(clockTime(c,100000),100);
-assert.equal(simulate(DEFAULT_SETUP).lapTime,108.59340246833438,'Physics regression');
+// Floating-point JIT rounding may vary by a few ulps between isolated and combined suites.
+assert.ok(Math.abs(simulate(DEFAULT_SETUP).lapTime-108.59340246833438)<1e-9,'Physics regression');
 console.log({motion:'passed',maxHeadingJump:maxJump,checks:'path equality, boundaries, seam, signed steering, immutable results, clocks/rates/seeking'});

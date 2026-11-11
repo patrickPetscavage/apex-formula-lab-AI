@@ -1,10 +1,20 @@
-# APEX Formula Lab — Build 3B
+# APEX Formula Lab — Historical Research & Race Predictions
 
-For GitHub Pages deployment, follow [GITHUB_PAGES.md](GITHUB_PAGES.md). Current vehicle/model details are in [BUILD_3B.md](BUILD_3B.md). Use `pnpm build:pages` for the static website.
+For the GitHub Pages website, follow [GITHUB_PAGES.md](GITHUB_PAGES.md) and use `pnpm build:pages`. The static entry retains Garage and adds Historical Data and Race Predictions through hash routes. Current vehicle/model details remain in [BUILD_3B.md](BUILD_3B.md).
 
----
+## FastF1 historical research and regression scenarios
 
-## Earlier documentation
+Open **Historical Data** or **Race Predictions** from the garage. A strict pre-2025 ingestion/import pipeline, synchronized historical telemetry replay, experimental F2004 comparison/calibration, chronological ridge-regression evaluation and configurable independent ghost races are implemented. Raw datasets stay local by default. Actual session download currently requires local FastF1 authentication; no real-data evaluation is claimed until that succeeds. See [setup, methods, verification and limitations](docs/FASTF1.md).
+
+## Automated engineering experiments — 20 October 2026
+
+Open **Compare → Experiment laboratory**. Select F2004 or SF-26, choose configuration A and B from defaults/current editor/saved configurations, and select Suzuka, Monza and/or Spa. F2004 offers A-optimized shared paths, independent optimization, and centerline comparisons; SF-26 batches use centerline. Run the queue, inspect circuit-relative A/B metrics, and open a row for existing telemetry/sector/ghost playback. Cancel retains completed pairs; retry uses the original snapshots. Save batches in IndexedDB or export validated full JSON and summary CSV. Existing configurations and single-run history are preserved.
+
+See [batch architecture, usage, validation and limitations](docs/BATCH_EXPERIMENTS.md). Browser/WebGL verification was unavailable; numerical, queue, persistence-adapter and production-worker checks are provided. The website's **Download source** link includes this milestone.
+
+## Multi-circuit engineering update — 19 October 2026
+
+Circuit cards select Suzuka, Monza or Spa while preserving the vehicle setup. Run a simulation after changing circuits. F2004 supports centerline, custom and optimized lines; SF-26 retains centerline/custom only. Open experiment history to filter identical setups across circuits, inspect normalized circuit-specific reference deltas, and export JSON/CSV. Detailed A/B traces require two runs on the currently selected circuit. Saved results retain their original circuit/version. Monza is flat; Spa and Suzuka elevations are approximations. See [architecture and Cesium interface](docs/MULTI_CIRCUIT.md) and [data/licensing](public/data/CIRCUITS.md).
 
 # APEX / Formula Lab — Build 2B
 

@@ -1,18 +1,23 @@
-import {TRACK,type TrackPoint} from './track';
-export type Trajectory={version:1;id:'centerline'|'smooth'|'custom';name:string;offsets:number[]};
+import {TRACK,activateTrack,ACTIVE_CIRCUIT,getCircuit,referenceTrack,type TrackPoint} from './track';
+export type Trajectory={version:1;id:'centerline'|'smooth'|'custom';name:string;offsets:number[];circuitId?:string;trackVersion?:string};
 export const CENTERLINE:Trajectory={version:1,id:'centerline',name:'Reference centerline',offsets:Array(24).fill(0)};
 export const SMOOTH_LINE:Trajectory={version:1,id:'smooth',name:'Optimized racing line',offsets:Array(24).fill(0)};
-export const trajectoryKey=(t:Trajectory)=>JSON.stringify([t.id,t.offsets]);
+export const trajectoryKey=(t:Trajectory)=>JSON.stringify([t.id,t.offsets,t.circuitId??ACTIVE_CIRCUIT.id,t.trackVersion??ACTIVE_CIRCUIT.version]);
 export const CAR_MARGIN=1.2; // 0.9 m approximate half-width + 0.3 m clearance.
-export const CORRIDOR=TRACK.map((p,i)=>{
- const a=TRACK[(i+TRACK.length-1)%TRACK.length],q=TRACK[(i+1)%TRACK.length],d=Math.hypot(q.x-a.x,q.z-a.z),nx=-(q.z-a.z)/d,nz=(q.x-a.x)/d;
+export const makeCorridor=(track:TrackPoint[])=>track.map((p,i)=>{
+ const a=track[(i+track.length-1)%track.length],q=track[(i+1)%track.length],d=Math.hypot(q.x-a.x,q.z-a.z),nx=-(q.z-a.z)/d,nz=(q.x-a.x)/d;
  return {nx,nz,min:-p.left+CAR_MARGIN,max:p.right-CAR_MARGIN,width:p.left+p.right,heading:Math.atan2(q.x-a.x,q.z-a.z),banking:0,
  left:{x:p.x-nx*p.left,z:p.z-nz*p.left},right:{x:p.x+nx*p.right,z:p.z+nz*p.right}};
 });
-export function validateTrajectory(input:unknown):Trajectory{
+export let CORRIDOR=makeCorridor(TRACK);
+export function selectCircuit(id:string){activateTrack(id);CORRIDOR=makeCorridor(TRACK);}
+export function validateTrajectory(input:unknown,circuitId:string=ACTIVE_CIRCUIT.id,legacyCircuitId='suzuka'):Trajectory{
+ const circuit=getCircuit(circuitId);
  const t=input as Trajectory;
- if(!t||t.version!==1||!['centerline','smooth','custom'].includes(t.id)||typeof t.name!=='string'||!t.name.trim()||t.name.length>60||!Array.isArray(t.offsets)||![12,24,TRACK.length].includes(t.offsets.length)||!t.offsets.every(v=>typeof v==='number'&&Number.isFinite(v)&&Math.abs(v)<=15))throw Error('Invalid trajectory: use 12/24 control offsets or a sampled path, within ±15 m.');
- return {...t,name:t.name.trim(),offsets:[...t.offsets]};
+ if(!t||t.version!==1||!['centerline','smooth','custom'].includes(t.id)||typeof t.name!=='string'||!t.name.trim()||t.name.length>60||!Array.isArray(t.offsets)||![12,24,referenceTrack(circuitId).length].includes(t.offsets.length)||!t.offsets.every(v=>typeof v==='number'&&Number.isFinite(v)&&Math.abs(v)<=15))throw Error('Invalid trajectory: use 12/24 control offsets or a sampled path, within ±15 m.');
+ if(t.circuitId&&t.circuitId!==circuitId||t.trackVersion&&t.trackVersion!==circuit.version)throw Error('Trajectory belongs to another circuit/version.');
+ if(t.id==='custom'&&!t.circuitId&&legacyCircuitId!==circuitId)throw Error('Legacy trajectory has no matching circuit identity.');
+ return {version:1,id:t.id,name:t.name.trim(),offsets:[...t.offsets],circuitId,trackVersion:circuit.version};
 }
 export const boundOffset=(o:number,i:number)=>Math.max(CORRIDOR[i].min,Math.min(CORRIDOR[i].max,o));
 export function pathFromOffsets(offsets:number[]):TrackPoint[]{
@@ -39,5 +44,6 @@ export function smoothOffsets(passes=1800):number[]{
  }return offsets;
 }
 export function buildTrajectory(t:Trajectory):TrackPoint[]{
+ t=validateTrajectory(t);
  return t.id==='centerline'?TRACK.map(p=>({...p})):pathFromOffsets(t.id==='smooth'?smoothOffsets():offsetsFor(t));
 }

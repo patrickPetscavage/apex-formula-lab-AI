@@ -32,3 +32,10 @@ Production static build, repository-relative HTML assets/download links/worker U
 Browser storage is origin-specific: export setups/experiments from the existing Sites app and import them on GitHub Pages. They do not transfer automatically. Keep third-party notices and Suzuka data licenses included in this repository.
 
 The original README below predates several milestones; BUILD_3B.md is the current model/feature summary. Original Sites build commands remain separate from `build:pages`.
+
+# Latest research workspaces
+
+Historical Data and Race Predictions are available as `#history` and `#predictions` routes under the repository's Pages URL. Navigation, dataset URLs, worker assets and downloads retain the repository base path. Pages uses the same research components as the Vinext application.
+
+Python/FastF1 runs locally through `scripts/fastf1_ingest.py`; upload the resulting authorized pre-2025 JSON archives through Historical Data. No account credentials, private caches, training datasets or generated local results are included in the website/source download. See [docs/FASTF1.md](docs/FASTF1.md) for ingestion, authentication, regression methods and limitations.
+

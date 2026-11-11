@@ -1,12 +1,10 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./research.css";
 
 export const metadata: Metadata = {
   title: "APEX / Formula Lab",
   description: "Explore a 3D formula car, tune components, and compare simulated laps in an independent engineering sandbox.",
-  other: {
-    "codex-preview": "development",
-  },
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",

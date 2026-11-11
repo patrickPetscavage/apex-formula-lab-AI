@@ -1,8 +1,8 @@
 import {type Setup} from './setup';
 import {vehicleModel} from './vehicle';
-import {TRACK,TRACK_LENGTH,type TrackPoint} from './track';
+import {TRACK,TRACK_LENGTH,ACTIVE_CIRCUIT,referenceTrack,type TrackPoint} from './track';
 import type {SuspensionTelemetry} from './suspension';
-export type Lap={vehicleId?:'f2004'|'sf26';modelVersion?:string;dimensions?:{wheelbase:number;tireRadius:number};capabilities?:{hybrid:boolean;activeAero:boolean;suspension:boolean;engine:string;aero:string;calibrated:boolean};suspension?:SuspensionTelemetry;speed:number[];time:number[];ax:number[];ay:number[];lapTime:number;sectors:number[];topSpeed:number;setup:Setup;iterations:number;residual:number;path:TrackPoint[];pathId:string;gear:number[];telemetry:{throttle:number;brake:number;rpm:number;downforce:number;frontAero:number;rearAero:number;drag:number;utilization:number;steering:number;offset:number}[];optimization?:{evaluations:number;centerlineTime:number;gain:number}};
+export type Lap={circuitId?:string;trackVersion?:string;vehicleId?:'f2004'|'sf26';modelVersion?:string;dimensions?:{wheelbase:number;tireRadius:number};capabilities?:{hybrid:boolean;activeAero:boolean;suspension:boolean;engine:string;aero:string;calibrated:boolean};suspension?:SuspensionTelemetry;speed:number[];time:number[];ax:number[];ay:number[];lapTime:number;sectors:number[];topSpeed:number;setup:Setup;iterations:number;residual:number;path:TrackPoint[];pathId:string;gear:number[];telemetry:{throttle:number;brake:number;rpm:number;downforce:number;frontAero:number;rearAero:number;drag:number;utilization:number;steering:number;offset:number}[];optimization?:{evaluations:number;centerlineTime:number;gain:number}};
 export function simulate(setup:Setup, track:TrackPoint[]=TRACK,pathId='centerline',model=vehicleModel(setup),wheelbase=3.05):Lap{
  const {c,engine,braking,ceiling,drag}=model,g=9.81,n=track.length;
  const axleCapacity=model.capacity;
@@ -25,10 +25,11 @@ export function simulate(setup:Setup, track:TrackPoint[]=TRACK,pathId='centerlin
   const ref=TRACK[i],a=TRACK[(i+n-1)%n],b=TRACK[(i+1)%n],len=Math.hypot(b.x-a.x,b.z-a.z);
   return {throttle:Math.min(1,traction*speed/Math.max(1,drive.power)),brake:Math.min(1,brakeForce/(c.mass*setup.brakeLimit*g)),rpm:drive.rpm,downforce:aero.total,frontAero:aero.front,rearAero:aero.rear,drag:aero.drag,utilization,steering:Math.atan(wheelbase*track[i].k)*180/Math.PI,offset:((track[i].x-ref.x)*(-(b.z-a.z))+(track[i].z-ref.z)*(b.x-a.x))/len};
  });
- return {telemetry,gear:v.map(speed=>engine(speed).gear),path:track,pathId,speed:v,time,ax,ay,lapTime:time[n],sectors:[splits[0],splits[1]-splits[0],splits[2]-splits[1]],topSpeed:Math.max(...v)*3.6,setup:{...setup},iterations,residual};
+ return {circuitId:ACTIVE_CIRCUIT.id,trackVersion:ACTIVE_CIRCUIT.version,telemetry,gear:v.map(speed=>engine(speed).gear),path:track,pathId,speed:v,time,ax,ay,lapTime:time[n],sectors:[splits[0],splits[1]-splits[0],splits[2]-splits[1]],topSpeed:Math.max(...v)*3.6,setup:{...setup},iterations,residual};
 }
 export function sampleLap(lap:Lap,t:number){
+ const reference=lap.circuitId?referenceTrack(lap.circuitId):TRACK;
  const path=lap.path??TRACK,length=path.reduce((sum,p)=>sum+p.ds,0);
  const tt=Math.max(0,Math.min(t,lap.lapTime));let lo=0,hi=path.length;while(lo+1<hi){const m=(lo+hi)>>1;if(lap.time[m]<=tt)lo=m;else hi=m;}
- const i=lo,j=(i+1)%path.length,dt=tt-lap.time[i],v0=lap.speed[i],a=lap.ax[i];const u=Math.max(0,Math.min(1,(v0*dt+.5*a*dt*dt)/path[i].ds));const p=path[i],q=path[j];return {station:TRACK[i].s+TRACK[i].ds*u,y:p.y+(q.y-p.y)*u,pitch:Math.atan2(q.y-p.y,Math.hypot(q.x-p.x,q.z-p.z)),x:p.x+(q.x-p.x)*u,z:p.z+(q.z-p.z)*u,heading:Math.atan2(q.x-p.x,q.z-p.z),speed:(v0+a*dt)*3.6,s:p.s+p.ds*u,ax:a/9.81,ay:lap.ay[i]/9.81,i,u,progress:(p.s+p.ds*u)/length};
+ const i=lo,j=(i+1)%path.length,dt=tt-lap.time[i],v0=lap.speed[i],a=lap.ax[i];const u=Math.max(0,Math.min(1,(v0*dt+.5*a*dt*dt)/path[i].ds));const p=path[i],q=path[j];return {station:reference[i].s+reference[i].ds*u,y:p.y+(q.y-p.y)*u,pitch:Math.atan2(q.y-p.y,Math.hypot(q.x-p.x,q.z-p.z)),x:p.x+(q.x-p.x)*u,z:p.z+(q.z-p.z)*u,heading:Math.atan2(q.x-p.x,q.z-p.z),speed:(v0+a*dt)*3.6,s:p.s+p.ds*u,ax:a/9.81,ay:lap.ay[i]/9.81,i,u,progress:(p.s+p.ds*u)/length};
 }

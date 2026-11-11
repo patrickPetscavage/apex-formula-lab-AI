@@ -4,10 +4,11 @@ import vm from 'node:vm';
 import assert from 'node:assert/strict';
 const root='dist/client';
 const files=fs.readdirSync(root,{recursive:true}).filter(f=>f.endsWith('.js'));
-const page=files.map(f=>fs.readFileSync(path.join(root,f),'utf8')).find(s=>s.includes('new Worker('));
+const chunks=files.map(f=>fs.readFileSync(path.join(root,f),'utf8'));
+const page=chunks.find(s=>s.includes('new Worker('));
 assert.ok(page,'Client worker constructor exists');
 assert.ok(!/new Worker\(new URL\([^)]*file:/.test(page),'Worker must not resolve against a file:// build address');
-const asset=page.match(/\/_next\/static\/lap\.worker-[\w-]+\.js/)?.[0];
+const asset=chunks.map(s=>s.match(/\/_next\/static\/lap\.worker-[\w-]+\.js/)?.[0]).find(Boolean);
 assert.ok(asset,'Client contains a same-origin worker asset URL');
 assert.equal(new URL(asset,'https://example.test').origin,'https://example.test');
 const code=fs.readFileSync(path.join(root,asset),'utf8');
@@ -28,3 +29,23 @@ self.onmessage({data:{id:5,vehicleId:'sf26',setup:{...sf,power:250}}});assert.ok
 self.onmessage({data:{id:6,vehicleId:'sf26',setup:sf,trajectory:{version:1,id:'custom',name:'Worker custom',offsets:Array.from({length:24},(_,i)=>Math.sin(i)*2)}}});assert.ok(!replies[5].error);assert.ok(replies[5].lap.telemetry.some(t=>Math.abs(t.offset)>.5));
 console.log('SF-26 production worker: separate model, input rejection, power sensitivity and custom trajectory passed.');
 console.log('Production worker verified: same-origin URL, packaged asset exists, baseline and modified runs return valid results.');
+
+for(const [j,circuitId] of ['monza','spa','suzuka'].entries()){
+ self.onmessage({data:{id:20+j,circuitId,setup,trajectory:{version:1,id:'centerline',name:'Centerline',offsets:Array(24).fill(0)}}});
+ const r=replies.at(-1);assert.ok(!r.error,r.error);assert.equal(r.lap.circuitId,circuitId);assert.ok(r.lap.lapTime>0);assert.equal(r.baseline.circuitId,circuitId);
+}
+console.log('Production worker circuit switching: Monza, Spa, Suzuka passed.');
+
+const definition={version:1,id:'production-batch',name:'Packaged batch regression',createdAt:'2026-10-20T00:00:00.000Z',vehicleId:'sf26',modelVersion:'sf26-ice-fixed-3b.1',mode:'centerline',a:{name:'Reference',setup:sf},b:{name:'Reduced power',setup:{...sf,power:250}},circuits:[{id:'monza',version:'monza-tum-v1'}]};
+const setupKey=s=>JSON.stringify(Object.entries(s).sort(([a],[b])=>a.localeCompare(b)));
+const key=JSON.stringify([definition.id,definition.vehicleId,definition.modelVersion,definition.mode,definition.circuits[0],setupKey(definition.a.setup),setupKey(definition.b.setup)]);
+const job={kind:'batch',id:101,key,definition,circuitId:'monza',trackVersion:'monza-tum-v1'},start=replies.length;
+self.onmessage({data:job});const messages=replies.slice(start);
+assert.equal(messages.length,3,JSON.stringify(messages.map(m=>m.error)));
+assert.deepEqual(messages.map(m=>m.kind),['progress','progress','result']);assert.deepEqual(messages.slice(0,2).map(m=>m.stage),['A','B']);
+const pair=messages[2];assert.equal(pair.key,key);assert.equal(pair.lap.circuitId,'monza');assert.equal(pair.lap.vehicleId,'sf26');assert.ok(pair.lap.lapTime>pair.baseline.lapTime);
+assert.equal(JSON.stringify(pair.lap.path),JSON.stringify(pair.baseline.path));
+self.onmessage({data:{...job,id:102,trackVersion:'spa-tum-v1'}});assert.match(replies.at(-1).error,/identity mismatch/);
+self.onmessage({data:{id:103,circuitId:'spa',trackVersion:'monza-tum-v1',setup}});assert.match(replies.at(-1).error,/Circuit version mismatch/);
+self.onmessage({data:{id:104,circuitId:'monza',setup,trajectory:{version:1,id:'custom',name:'Wrong circuit',circuitId:'suzuka',trackVersion:'suzuka-5807-v1',offsets:Array(24).fill(0)}}});assert.match(replies.at(-1).error,/another circuit/);
+console.log('Production batch protocol: staged A/B progress, exact identity, SF-26 pair, version/circuit rejection passed.');
