@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import "./research.css";
 import "./atlas.css";
+import "./workflow.css";
 
 export const metadata: Metadata = {
   title: "APEX / Formula Lab",

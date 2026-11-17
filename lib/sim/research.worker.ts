@@ -1,10 +1,10 @@
-import {trainPrediction,predictRace} from '../racePrediction';
+import {trainPrediction,predictRace,evaluatePrediction} from '../racePrediction';
 import {validateArchive,traceError,type CalibrationResult} from '../fastf1';
 import {referenceTrack,activateTrack} from './track';
 import {simulate} from './physics';
 import {validateSetup} from './setup';
 self.onmessage=e=>{const {id,kind}=e.data;try{
- if(kind==='train'){const model=trainPrediction(e.data.archives);self.postMessage({id,kind,model});}
+ if(kind==='train'){const model=trainPrediction(e.data.archives,e.data.options);const evaluation=evaluatePrediction(model,e.data.archives);self.postMessage({id,kind,model,evaluation});}
  else if(kind==='predict'){const results=predictRace(e.data.model,e.data.scenario);self.postMessage({id,kind,results});}
  else if(kind==='calibrate'){
   const a=validateArchive(e.data.archive),train=a.traces.find(t=>`${t.driver}:${t.lap}`===e.data.traceKey),validation=a.traces.find(t=>`${t.driver}:${t.lap}`===e.data.validationKey);

@@ -2,13 +2,17 @@
 
 For the GitHub Pages website, follow [GITHUB_PAGES.md](GITHUB_PAGES.md) and use `pnpm build:pages`. The static entry retains Garage and adds Historical Data and Race Predictions through hash routes. Current vehicle/model details remain in [BUILD_3B.md](BUILD_3B.md).
 
+## Browser-only data → test → ghost comparison — 17 November 2026
+
+Open **Predict & compare** for a guided four-step flow: load six real 2023–2024 OpenF1 races, hold out a later event, test or use the included evaluated regression, configure tire/pit plans and replay multiple ghosts. No terminal, Python, login or API key is needed. Physics setup experiments stay in **Physics circuits** and **Car & setup**. Ghost comparison is replay, not player-controlled driving. Advanced imports/exports and existing engineering workflows remain available. Data and derived starter artifacts are CC BY-NC-SA 4.0 for non-commercial educational use, separately from MIT software. See [workflow, methods, real-data evaluation, line fixes and verification](docs/USABILITY_2026.md).
+
 ## Geographic circuits and graphics — 11 November 2026
 
 Open **2026 Circuits** for all 23 current calendar venues, source-mapped scenery, cached terrain context, quality settings and 1–4 physics ghosts. Suzuka pit/stand orientation is corrected in the original engineering scene too. Eight layouts remain provisional; road heights, widths and scenery are approximate. See [methods, accuracy, screenshots, performance and verification](docs/GRAPHICS_2026.md) and [full inventory](docs/2026_CIRCUIT_INVENTORY.md). No 2025+ observed telemetry was introduced.
 
 ## FastF1 historical research and regression scenarios
 
-Open **Historical Data** or **Race Predictions** from the garage. A strict pre-2025 ingestion/import pipeline, synchronized historical telemetry replay, experimental F2004 comparison/calibration, chronological ridge-regression evaluation and configurable independent ghost races are implemented. Raw datasets stay local by default. Actual session download currently requires local FastF1 authentication; no real-data evaluation is claimed until that succeeds. See [setup, methods, verification and limitations](docs/FASTF1.md).
+Open **Historical Data** or **Race Predictions** from the garage. A strict pre-2025 ingestion/import pipeline, synchronized historical telemetry replay, experimental F2004 comparison/calibration, chronological ridge-regression evaluation and configurable independent ghost races are implemented. The public starter library now uses attributed real OpenF1 snapshots; additional FastF1 acquisition remains an optional developer workflow with separate source rights. See [setup, methods, verification and limitations](docs/FASTF1.md).
 
 ## Automated engineering experiments — 20 October 2026
 

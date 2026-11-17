@@ -1,2 +1,2 @@
-import ResearchWorkspace from '@/components/lab/ResearchWorkspace';
-export default function HistoricalPage(){return <ResearchWorkspace mode="history"/>;}
+import RaceLab from '@/components/lab/RaceLab';
+export default function HistoricalPage(){return <RaceLab mode="history"/>;}

@@ -6,3 +6,5 @@
 - All car meshes, carbon/asphalt texture generation and schematic scenery are original application code. No external car model, satellite imagery, track texture, logo or sponsor image is distributed.
 
 - 2026 atlas: © OpenStreetMap contributors, ODbL 1.0; source-derived roads, pit lines and building footprints are distributed with provenance in public/data/atlas-2026. NASA/USGS SRTM v3 elevation through Open Topo Data; EGM96 orthometric datum. Community route-guide attribution (bacinger/f1-circuits, MIT) and exact license are retained. See public/data/atlas-2026/NOTICE.md and docs/GRAPHICS_2026.md.
+
+- Historical starter library and derived model/evaluation: OpenF1 and contributors, https://openf1.org/ , CC BY-NC-SA 4.0 for non-commercial educational/fan analysis, https://creativecommons.org/licenses/by-nc-sa/4.0/ . Normalized/joined by Apex; unavailable flags and telemetry remain missing. These assets are not covered by the software MIT license. See public/data/fastf1/NOTICE.md and docs/USABILITY_2026.md.

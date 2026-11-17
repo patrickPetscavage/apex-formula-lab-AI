@@ -1,5 +1,7 @@
 # Historical FastF1 research and race scenarios
 
+**17 November 2026 update:** ordinary visitors now use the [browser-only guided workflow](USABILITY_2026.md) with six real, attributed 2023–2024 OpenF1 races and an evaluated starter model. No terminal or FastF1 authentication is needed for that path. FastF1 JSON imports and measured-trace tools remain available. The commands below are optional developer/authorized data-maintainer instructions; early empty-library verification notes are historical.
+
 This milestone adds `/history` and `/predictions`. Both are linked from the existing garage. Existing F2004/SF-26 setup, physics, single-run history and batch experiments remain separate.
 
 ## Run locally
@@ -59,7 +61,7 @@ At most twenty driver/lap traces are exported per session. All lap timing rows, 
 
 Files land in ignored `data-local/fastf1`, outside public website assets. The **Load local / hosted sessions** button reads a validated local index in development, or import the JSON files directly. Multiple files and exported whole libraries are accepted. IndexedDB saves the library in `apex-historical-research-1`, independent of existing simulator storage. Transactions are explicit; storage failures retain in-memory data and offer JSON exports. A different version of an already-loaded session is rejected until the library is explicitly cleared. Exports are the portable backup.
 
-The Vite development middleware serves only exact supported pre-2025 session filenames and validates every response. There is no arbitrary URL proxy or backend endpoint that can request future sessions. Production contains an empty public index by default and uses local JSON import; it cannot run Python. If you have rights to host datasets, deploy authorized archive files and their index to `public/data/fastf1` before building. Browser validation still applies. Do not copy authentication caches into public assets.
+The Vite development middleware serves only exact supported pre-2025 session filenames and validates every response. There is no arbitrary URL proxy or backend endpoint that can request future sessions. Production now bundles the OpenF1 starter library with its own attribution/rights; additional FastF1 data may be imported as JSON. It cannot run Python. If you have rights to host datasets, deploy authorized archive files and their index to `public/data/fastf1` before building. Browser validation still applies. Do not copy authentication caches into public assets.
 
 ## Telemetry and comparison methods
 

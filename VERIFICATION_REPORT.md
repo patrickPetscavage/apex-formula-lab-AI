@@ -1,3 +1,9 @@
+# Browser-only prediction workflow — 17 November 2026
+
+See [current usability, real datasets, holdout evaluation, line fixes and validation](docs/USABILITY_2026.md). Six real OpenF1 races, a versioned evaluated starter model, a four-step browser workflow and explicit ghost replay are implemented. Normal visitors need no terminal or authentication. Data/derived starter assets are CC BY-NC-SA 4.0, separately from MIT software. The earlier audits below remain historical records.
+
+---
+
 # Geographic graphics update — 11 November 2026
 
 See [current implementation, screenshots, performance and validation](docs/GRAPHICS_2026.md) and [2026 circuit inventory](docs/2026_CIRCUIT_INVENTORY.md). Current Pages/framework builds, TypeScript, source/coordinate checks, all-calendar atlas worker, historical research worker, vehicle geometry and batch/archive regressions pass. The older audit below is retained as historical context; its publication and browser-access limits do not describe this update.

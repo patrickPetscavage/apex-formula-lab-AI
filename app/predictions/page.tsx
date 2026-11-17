@@ -1,2 +1,2 @@
-import ResearchWorkspace from '@/components/lab/ResearchWorkspace';
-export default function PredictionsPage(){return <ResearchWorkspace mode="predictions"/>;}
+import RaceLab from '@/components/lab/RaceLab';
+export default function PredictionsPage(){return <RaceLab mode="predictions"/>;}

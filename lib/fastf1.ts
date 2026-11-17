@@ -5,11 +5,11 @@ import type {Lap} from './sim/physics';
 export const HISTORICAL_CUTOFF='2025-01-01T00:00:00Z';
 const date=z.string().refine(s=>Number.isFinite(Date.parse(s))&&Date.parse(s)>=Date.parse('2018-01-01T00:00:00Z')&&Date.parse(s)<Date.parse(HISTORICAL_CUTOFF),'Only dates in 2018–2024 are allowed');
 const nullable=z.number().finite().nullable();
-const lapSchema=z.object({driver:z.string().min(1).max(8),driverNumber:z.string().nullable(),lap:z.number().int().positive(),lapTime:nullable,sectors:z.array(nullable).length(3),compound:z.string().nullable(),tireAge:nullable,stint:nullable,trackStatus:z.string().nullable(),accurate:z.boolean(),deleted:z.boolean(),pitIn:nullable,pitOut:nullable,sessionTime:nullable,startTime:nullable});
+const lapSchema=z.object({driver:z.string().min(1).max(8),driverNumber:z.string().nullable(),lap:z.number().int().positive(),lapTime:nullable,sectors:z.array(nullable).length(3),compound:z.string().nullable(),tireAge:nullable,stint:nullable,trackStatus:z.string().nullable(),accurate:z.boolean().nullable(),deleted:z.boolean().nullable(),pitIn:nullable,pitOut:nullable,sessionTime:nullable,startTime:nullable});
 const carSchema=z.object({t:z.number().finite().nonnegative(),date,sessionTime:nullable,speed:z.number().min(0).max(450).nullable(),throttle:z.number().min(0).max(100).nullable(),brake:z.boolean().nullable(),rpm:z.number().min(0).max(25000).nullable(),gear:z.number().int().min(0).max(8).nullable(),distance:nullable,source:z.string().nullable()});
 const positionSchema=z.object({t:z.number().finite().nonnegative(),date,x:nullable,y:nullable,z:nullable,status:z.string().nullable(),source:z.string().nullable()});
-export const archiveSchema=z.object({schema:z.literal('apex-fastf1-1'),cutoff:z.literal(HISTORICAL_CUTOFF),id:z.string().max(80),year:z.number().int().min(2018).max(2024),date,circuitId:z.enum(['suzuka','monza','spa']),trackVersion:z.string(),referenceLength:z.number().positive(),session:z.enum(['Q','R','FP1','FP2','FP3','S','SQ']),event:z.string().max(160),layout:z.string(),contentHash:z.string().regex(/^[a-f0-9]{64}$/),
- provenance:z.object({provider:z.literal('FastF1'),version:z.string(),retrievedAt:z.string().datetime({offset:true}),source:z.string(),cutoff:z.literal(HISTORICAL_CUTOFF),rights:z.string(),channels:z.record(z.string()),missing:z.string(),interpolation:z.string()}),
+export const archiveSchema=z.object({schema:z.enum(['apex-fastf1-1','apex-historical-1']),cutoff:z.literal(HISTORICAL_CUTOFF),id:z.string().max(80),year:z.number().int().min(2018).max(2024),date,circuitId:z.enum(['suzuka','monza','spa']),trackVersion:z.string(),referenceLength:z.number().positive(),session:z.enum(['Q','R','FP1','FP2','FP3','S','SQ']),event:z.string().max(160),layout:z.string(),contentHash:z.string().regex(/^[a-f0-9]{64}$/),
+ provenance:z.object({provider:z.enum(['FastF1','OpenF1']),version:z.string(),retrievedAt:z.string().datetime({offset:true}),source:z.string(),cutoff:z.literal(HISTORICAL_CUTOFF),rights:z.string(),channels:z.record(z.string()),missing:z.string(),interpolation:z.string()}),
  laps:z.array(lapSchema).min(1).max(5000),results:z.array(z.record(z.union([z.string(),z.number().finite(),z.null()]))).max(30),
  weather:z.array(z.object({time:nullable,airTemp:nullable,trackTemp:nullable,rainfall:z.boolean().nullable(),humidity:nullable,pressure:nullable,windSpeed:nullable,windDirection:nullable})).max(1500),
  traces:z.array(z.object({driver:z.string(),lap:z.number().int().positive(),lapTime:z.number().positive(),car:z.array(carSchema).min(10).max(20000),positions:z.array(positionSchema).max(20000)})).max(20),warnings:z.array(z.string()).max(100)});
@@ -18,6 +18,8 @@ export type HistoricalTrace=HistoricalArchive['traces'][number];
 export type HistoricalLap=HistoricalArchive['laps'][number];
 export function validateArchive(input:unknown):HistoricalArchive {
  const a=archiveSchema.parse(input),c=getCircuit(a.circuitId);
+ if(a.provenance.provider==='FastF1'&&a.laps.some(l=>l.accurate===null||l.deleted===null))throw Error('FastF1 archives require their original accuracy/deletion flags.');
+ if(a.schema==='apex-fastf1-1'&&a.provenance.provider!=='FastF1')throw Error('A non-FastF1 source cannot claim FastF1 archive identity.');
  if(new Date(a.date).getUTCFullYear()!==a.year||a.id!==`${a.year}-${a.circuitId}-${a.session}`||c.version!==a.trackVersion||c.referenceLength!==a.referenceLength)throw Error('Archive year, circuit layout/version or identity mismatch.');
  const keys=new Set<string>();
  for(const l of a.laps){const key=`${l.driver}:${l.lap}`;if(keys.has(key))throw Error('Duplicate driver/lap');keys.add(key);if(l.lapTime!==null&&(l.lapTime<=0||l.lapTime>3600))throw Error('Invalid lap duration');}

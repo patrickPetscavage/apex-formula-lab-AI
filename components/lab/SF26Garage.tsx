@@ -1,5 +1,6 @@
 'use client';
-import {useState} from 'react';
+import AppNav from './AppNav';
+import {useState,type ReactNode} from 'react';
 import dynamic from 'next/dynamic';
 import {Box,ChevronRight,Eye,EyeOff,Layers3,Maximize2} from 'lucide-react';
 import {Slider} from '@/components/ui/slider';
@@ -11,15 +12,15 @@ import {SF26_CATALOG as catalog,SF26_SOURCES,SF26_SPECS} from '@/lib/sf26';
 // Dedicated SF-26 simulation is hosted beside the preserved garage.
 import {DEFAULT_SETUP} from '@/lib/sim/setup';
 const Viewport=dynamic(()=>import('./Viewport'),{ssr:false,loading:()=> <div className="viewport-loading">Preparing SF-26 preview…</div>});
-export default function SF26Garage({onReturn}:{onReturn:()=>void}){
+export default function SF26Garage({onReturn,circuitSelector}:{onReturn:()=>void;circuitSelector?:ReactNode}){
  const [mode,setMode]=useState<'garage'|'simulation'>('garage');
  const [selected,setSelected]=useState('sf26:front-wing'),[search,setSearch]=useState(''),[hidden,setHidden]=useState<Set<string>>(new Set()),[isolate,setIsolate]=useState<string|null>(null),[explode,setExplode]=useState(0),[transparent,setTransparent]=useState(false),[camera,setCamera]=useState('perspective'),[revision,setRevision]=useState(0);
  const part=catalog.byId.get(selected)!,geometry=catalog.resolve(selected),path=catalog.path(selected);
  const pick=(id:string)=>{setSelected(id);setHidden(h=>{const next=new Set(h);for(const ancestor of catalog.path(id))next.delete(ancestor.id);return next;});if(isolate)setIsolate(id);};
- return <main className="lab"><header className="topbar"><span className="wordmark"><span className="brand-mark">A</span>APEX<span className="brand-divider"/><span className="brand-sub">FORMULA LAB</span></span><span className="season">BUILD 3B / EXPERIMENTAL</span><button className="quiet" onClick={onReturn}>Return to F2004</button></header>
+ return <main className="lab"><header className="topbar"><span className="wordmark"><span className="brand-mark">A</span>APEX<span className="brand-divider"/><span className="brand-sub">FORMULA LAB</span></span><span className="season">BUILD 3B / EXPERIMENTAL</span><button className="quiet" onClick={onReturn}>Return to F2004</button></header><AppNav active="garage"/>
  <section className="projectbar"><div><div className="breadcrumb">WORKSPACE <ChevronRight size={12}/> SF-26 <span className="version">2026</span></div><h1>Ferrari SF-26 engineering laboratory.</h1></div><div className="project-actions"><button className="primary" onClick={()=>setMode(mode==='garage'?'simulation':'garage')}>{mode==='garage'?'Open experimental simulation':'Return to component garage'}</button></div></section>
  <div className="context-bar"><label className="car-select"><Box size={16}/><select aria-label="Vehicle" value="sf26" onChange={()=>onReturn()}><option value="f2004">Ferrari F2004 — existing simulation</option><option value="sf26">Ferrari SF-26 — experimental</option></select></label><span>Launch reference · 23 January 2026</span></div>
- <div className="result-provenance"><strong>GARAGE PREVIEW · ESTIMATED GEOMETRY</strong><span>Your F2004 setup, laps and comparison remain preserved. The dedicated experimental model uses its own assumptions; hybrid, active-aero transitions and suspension dynamics remain unsupported.</span><span>Original procedural reconstruction, not Ferrari CAD. No later race upgrades represented.</span></div>
+ {circuitSelector}<div className="result-provenance"><strong>GARAGE PREVIEW · ESTIMATED GEOMETRY</strong><span>Your F2004 setup, laps and comparison remain preserved. The dedicated experimental model uses its own assumptions; hybrid, active-aero transitions and suspension dynamics remain unsupported.</span><span>Original procedural reconstruction, not Ferrari CAD. No later race upgrades represented.</span></div>
  {mode==='garage'&&<><div className="garage-layout"><SidebarProvider className="component-sidebar-wrap"><Sidebar collapsible="none" className="component-sidebar"><SidebarContent><ComponentTree catalog={catalog} selected={selected} hidden={hidden} search={search} onSearch={setSearch} onSelect={pick}/></SidebarContent></Sidebar></SidebarProvider>
  <section className="garage-stage"><div className="stage-meta"><div><span className="eyebrow">COMPONENT LABORATORY</span><h2>SF-26 <span>/ 02</span></h2></div><span className="badge">ESTIMATED EXTERIOR</span></div>
  <Viewport vehicleId="sf26" mode="garage" setup={DEFAULT_SETUP} explode={explode} selected={selected} hidden={hidden} isolate={isolate} transparent={transparent} camera={camera} cameraRevision={revision} onSelect={pick} lap={null} baseline={null} time={0} getTime={()=>0} ghost={false} line={false}/>
