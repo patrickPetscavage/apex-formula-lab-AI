@@ -1,0 +1,158 @@
+[
+  {
+    "circuit": "suzuka-prediction",
+    "intrusions": 3,
+    "maxIntrusion": 0.026000001133066775,
+    "missing": 0
+  },
+  {
+    "circuit": "monza-prediction",
+    "intrusions": 2,
+    "maxIntrusion": 0.02600000000000011,
+    "missing": 0
+  },
+  {
+    "circuit": "spa-prediction",
+    "intrusions": 7,
+    "maxIntrusion": 0.5626522968730967,
+    "missing": 0
+  },
+  {
+    "circuit": "melbourne-atlas",
+    "intrusions": 5,
+    "maxIntrusion": 0.0615112066409651,
+    "missing": 0
+  },
+  {
+    "circuit": "shanghai-atlas",
+    "intrusions": 3,
+    "maxIntrusion": 0.026000008890883386,
+    "missing": 0
+  },
+  {
+    "circuit": "suzuka-atlas",
+    "intrusions": 3,
+    "maxIntrusion": 0.02599953628169871,
+    "missing": 0
+  },
+  {
+    "circuit": "miami-atlas",
+    "intrusions": 3,
+    "maxIntrusion": 0.026000086995244587,
+    "missing": 0
+  },
+  {
+    "circuit": "montreal-atlas",
+    "intrusions": 3,
+    "maxIntrusion": 0.02600003793135741,
+    "missing": 0
+  },
+  {
+    "circuit": "monaco-atlas",
+    "intrusions": 2,
+    "maxIntrusion": 0.02600256070178375,
+    "missing": 0
+  },
+  {
+    "circuit": "barcelona-atlas",
+    "intrusions": 2,
+    "maxIntrusion": 0.02599946604964032,
+    "missing": 0
+  },
+  {
+    "circuit": "spielberg-atlas",
+    "intrusions": 3,
+    "maxIntrusion": 0.026001834780572608,
+    "missing": 0
+  },
+  {
+    "circuit": "silverstone-atlas",
+    "intrusions": 3,
+    "maxIntrusion": 0.02599982035671289,
+    "missing": 0
+  },
+  {
+    "circuit": "spa-atlas",
+    "intrusions": 3,
+    "maxIntrusion": 0.025999911895326022,
+    "missing": 0
+  },
+  {
+    "circuit": "hungaroring-atlas",
+    "intrusions": 3,
+    "maxIntrusion": 0.0260013058005768,
+    "missing": 0
+  },
+  {
+    "circuit": "zandvoort-atlas",
+    "intrusions": 3,
+    "maxIntrusion": 0.026000012748957246,
+    "missing": 0
+  },
+  {
+    "circuit": "monza-atlas",
+    "intrusions": 3,
+    "maxIntrusion": 0.02599905393824642,
+    "missing": 0
+  },
+  {
+    "circuit": "madrid-atlas",
+    "intrusions": 3,
+    "maxIntrusion": 0.025999740778397396,
+    "missing": 0
+  },
+  {
+    "circuit": "baku-atlas",
+    "intrusions": 16,
+    "maxIntrusion": 0.3916489453638903,
+    "missing": 0
+  },
+  {
+    "circuit": "sepang-atlas",
+    "intrusions": 2,
+    "maxIntrusion": 0.026000734234944645,
+    "missing": 0
+  },
+  {
+    "circuit": "singapore-atlas",
+    "intrusions": 3,
+    "maxIntrusion": 0.12142048772918734,
+    "missing": 0
+  },
+  {
+    "circuit": "austin-atlas",
+    "intrusions": 2,
+    "maxIntrusion": 0.02599991985835448,
+    "missing": 0
+  },
+  {
+    "circuit": "mexico-atlas",
+    "intrusions": 0,
+    "maxIntrusion": 0,
+    "missing": 0
+  },
+  {
+    "circuit": "interlagos-atlas",
+    "intrusions": 1,
+    "maxIntrusion": 0.02599992976139731,
+    "missing": 0
+  },
+  {
+    "circuit": "las-vegas-atlas",
+    "intrusions": 4,
+    "maxIntrusion": 0.06812362397559801,
+    "missing": 0
+  },
+  {
+    "circuit": "lusail-atlas",
+    "intrusions": 3,
+    "maxIntrusion": 0.025999977754056047,
+    "missing": 0
+  },
+  {
+    "circuit": "yas-marina-atlas",
+    "intrusions": 3,
+    "maxIntrusion": 0.025999994931288906,
+    "missing": 0
+  }
+]

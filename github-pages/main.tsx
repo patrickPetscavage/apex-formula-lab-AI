@@ -1,4 +1,4 @@
-import {createRoot} from 'react-dom/client';
+import {createRoot,type Root} from 'react-dom/client';
 import {lazy,Suspense,useEffect,useState} from 'react';
 import '../app/globals.css';
 import '../app/research.css';
@@ -12,5 +12,8 @@ function PagesApp(){
  useEffect(()=>{const navigate=()=>{setRoute(location.hash);window.scrollTo(0,0);};window.addEventListener('hashchange',navigate);return()=>window.removeEventListener('hashchange',navigate);},[]);
  return <Suspense fallback={<p style={{padding:32}}>Loading workspace…</p>}>{route==='#circuits'?<CircuitAtlas/>:route==='#history'?<RaceLab key="history" mode="history"/>:route==='#predictions'?<RaceLab key="predictions" mode="predictions"/>:<Home/>}</Suspense>;
 }
-createRoot(document.getElementById('root')!).render(<PagesApp/>);
+// Vite may re-evaluate this entry after dependency optimization. Reuse its root.
+const container=document.getElementById('root')! as HTMLElement&{__apexRoot?:Root};
+const root=container.__apexRoot??(container.__apexRoot=createRoot(container));
+root.render(<PagesApp/>);
 

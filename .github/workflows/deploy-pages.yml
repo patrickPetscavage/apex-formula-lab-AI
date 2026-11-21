@@ -24,7 +24,9 @@ jobs:
         id: pages
       - run: pnpm install --frozen-lockfile
       - run: node node_modules/typescript/bin/tsc --noEmit
-      - run: node tests/run-typescript.mjs verify-geospatial verify-workflow
+      - run: node tests/run-typescript.mjs verify-geospatial verify-workflow verify-motion verify-ghost-motion
+      - run: node tests/verify-road-scene.mjs
+      - run: node tests/verify-replay-rig.mjs
       - run: python3 scripts/package-source.py
       - run: pnpm build:pages
         env:

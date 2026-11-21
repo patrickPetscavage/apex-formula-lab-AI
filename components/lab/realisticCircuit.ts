@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
+import {carveTerrain,footprintOnRoad} from '@/lib/trackGeometry';
 import {offsetRoad,roadFrame} from '@/lib/geospatial';
 import {terrainHeight,type AtlasCircuit} from '@/lib/circuitAtlas';
 import type {TrackPoint} from '@/lib/sim/track';
@@ -25,10 +26,11 @@ export function realisticCircuit(options:CircuitSceneOptions){
  // Sample actual DEM independently from road height. Legacy fallback is explicitly estimated.
  const terrainSegments=[quality==='high'?110:quality==='economy'?36:72,quality==='high'?90:quality==='economy'?30:60],cutRadius=Math.hypot((bounds.width+600)/terrainSegments[0],(bounds.height+600)/terrainSegments[1])+18;
  const groundHeight=(x:number,z:number)=>{const dem=atlas?terrainHeight(atlas,x,z):null;if(dem!==null){let h=dem-1;for(const p of track)if((p.x-x)**2+(p.z-z)**2<cutRadius**2)h=Math.min(h,p.y-1.5);return h;}let d=Infinity,h=0;for(let i=0;i<track.length;i+=5){const p=track[i],v=(p.x-x)**2+(p.z-z)**2;if(v<d){d=v;h=p.y;}}for(let i=0;i<track.length;i+=3){const p=track[i];if((p.x-x)**2+(p.z-z)**2<55**2)h=Math.min(h,p.y);}return h-2.4;};
- const terrain=new THREE.PlaneGeometry(bounds.width+600,bounds.height+600,quality==='high'?110:quality==='economy'?36:72,quality==='high'?90:quality==='economy'?30:60);terrain.rotateX(-Math.PI/2);terrain.translate(bounds.minX+bounds.width/2,0,bounds.minZ+bounds.height/2);const tp=terrain.getAttribute('position');for(let i=0;i<tp.count;i++)tp.setY(i,groundHeight(tp.getX(i),tp.getZ(i)));terrain.setAttribute('uv',new THREE.Float32BufferAttribute(Array.from({length:tp.count},(_,i)=>[tp.getX(i)/24,tp.getZ(i)/24]).flat(),2));terrain.computeVertexNormals();mesh(terrain,grassMat);
- if(!atlas)mesh(roadSurface(track,urban?3:15,-.17),grassMat);else for(const side of [-1,1])mesh(band(track,side,0,1.2,-.08),grassMat);if(!urban)for(const side of [-1,1])mesh(band(track,side,1.2,7,-.065),gravelMat);
+ const terrain=new THREE.PlaneGeometry(bounds.width+600,bounds.height+600,quality==='high'?110:quality==='economy'?36:72,quality==='high'?90:quality==='economy'?30:60);terrain.rotateX(-Math.PI/2);terrain.translate(bounds.minX+bounds.width/2,0,bounds.minZ+bounds.height/2);const tp=terrain.getAttribute('position');for(let i=0;i<tp.count;i++)tp.setY(i,groundHeight(tp.getX(i),tp.getZ(i)));carveTerrain(tp,terrain.index!.array,track,1.2);terrain.setAttribute('uv',new THREE.Float32BufferAttribute(Array.from({length:tp.count},(_,i)=>[tp.getX(i)/24,tp.getZ(i)/24]).flat(),2));terrain.computeVertexNormals();const terrainMesh=mesh(terrain,grassMat);terrainMesh.userData.terrain=true;
+ const skirt=(g:THREE.BufferGeometry,m:THREE.Material)=>{carveTerrain(g.getAttribute('position') as THREE.BufferAttribute,g.index!.array,track,.2);g.computeVertexNormals();return mesh(g,m);};
+ for(const side of [-1,1])skirt(band(track,side,0,1.2,-.08),grassMat);if(!urban)for(const side of [-1,1])skirt(band(track,side,1.2,7,-.065),gravelMat);
  const road=mesh(roadSurface(track,0,0),roadMat);road.userData.roadSurface=true;
- const rubberMat=material(0x282c30,.93);rubberMat.transparent=true;rubberMat.opacity=.22;rubberMat.depthWrite=false;const rubber=roadSurface(track,-Math.max(1,track[0].right-1.4),.008);mesh(rubber,rubberMat);
+
  for(const side of [-1,1])mesh(band(track,side,-.25,-.09,.018),material(0xe9e7d9,.95));
  const dummy=new THREE.Object3D(),curbs=new THREE.InstancedMesh(new THREE.BoxGeometry(1.05,.1,1),material(0xf4eee3),track.length*2),rails=new THREE.InstancedMesh(new THREE.BoxGeometry(.24,.72,1),material(0x8c989a,.45),track.length*2),posts=new THREE.InstancedMesh(new THREE.CylinderGeometry(.045,.045,3.1,5),material(0x77838a,.6),track.length),fence:number[]=[];let ci=0,ri=0,pi=0;
  const barrierOffset=urban?4:10;
@@ -40,7 +42,7 @@ export function realisticCircuit(options:CircuitSceneOptions){
  const buildings=atlas?.buildings??options.landmarks?.buildings??[],wallBatch:THREE.BufferGeometry[]=[],roofBatch:THREE.BufferGeometry[]=[];
  for(const b of buildings){const poly=b.footprint;if(poly.length<3)continue;const cx=poly.reduce((s,p)=>s+p[0],0)/poly.length,cz=poly.reduce((s,p)=>s+p[1],0)/poly.length;let closest=track[0],dist=Infinity;for(const p of track){const d=(p.x-cx)**2+(p.z-cz)**2;if(d<dist){dist=d;closest=p;}}
   // Do not place coarse DEM roofs over the racing corridor. Source footprints retained in data.
-  if(dist<(closest.left+3)**2)continue;
+  if(footprintOnRoad(poly,track,3))continue;
   const shape=new THREE.Shape(poly.map(p=>new THREE.Vector2(p[0]-cx,-p[1]+cz))),g=new THREE.ExtrudeGeometry(shape,{depth:b.height,bevelEnabled:false,curveSegments:1});g.rotateX(-Math.PI/2);const y=atlas?groundHeight(cx,cz)+1:closest.y;
   const special=[184422099,183394522,183394524].includes(b.osmId),roof=new THREE.ShapeGeometry(shape);roof.rotateX(-Math.PI/2);
   if(special){const building=mesh(g,material(b.kind==='grandstand'?0x9aa9ad:0xabb1ae,.7));building.position.set(cx,y,cz);building.castShadow=true;building.userData.landmarkId=b.osmId;building.userData.landmarkName=b.name;const canopy=mesh(roof,material(b.kind==='grandstand'?0xe9e8de:0xd0d4d0,.6));canopy.position.set(cx,y+b.height+.02,cz);canopy.castShadow=true;}

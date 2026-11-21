@@ -15,7 +15,7 @@ assert.ok(scripts.includes(base+'assets/'+worker),'Worker URL includes repositor
 assert.ok(!scripts.includes('file:///'),'No build-machine URLs');
 for(const route of ['#history','#predictions','#circuits'])assert.ok(scripts.includes(base+route),'Workspace navigation includes repository base and hash route');
 assert.ok(scripts.includes(base+'data/fastf1/')&&scripts.includes('index.json'),'Historical URL builder stays under repository base');
-const catalog=JSON.parse(fs.readFileSync(root+'/data/fastf1/index.json','utf8'));assert.equal(catalog.sessions.length,6);for(const session of catalog.sessions)assert.ok(fs.existsSync(root+'/data/fastf1/'+session.id+'.json'),'Bundled historical session exists');assert.ok(fs.existsSync(root+'/data/fastf1/starter-model.json'),'Included real-data model exists');
+const catalog=JSON.parse(fs.readFileSync(root+'/data/fastf1/index.json','utf8'));assert.equal(catalog.sessions.length,14);for(const session of catalog.sessions)assert.ok(fs.existsSync(root+'/data/fastf1/'+session.id+'.json'),'Bundled historical session exists');assert.ok(fs.existsSync(root+'/data/fastf1/starter-model.json'),'Included real-data model exists');
 const research=files.find(f=>/^research\.worker-/.test(f));assert.ok(research,'Research worker is packaged');
 assert.ok(scripts.includes(base+'assets/'+research),'Research worker URL includes repository base');
 const researchReplies=[],researchSelf={postMessage:r=>researchReplies.push(r)};

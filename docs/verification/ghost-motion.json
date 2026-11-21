@@ -1,0 +1,26 @@
+[
+  {
+    "circuit": "suzuka",
+    "buildMs": 33.17599999999999,
+    "minCarMarginMetres": 0.6920424652751811,
+    "maxKnotAngle": 0.00003354991824666697,
+    "samples": 10000,
+    "sampleMs": 0.00210548
+  },
+  {
+    "circuit": "monza",
+    "buildMs": 29.788299999999992,
+    "minCarMarginMetres": 0.8951210471870075,
+    "maxKnotAngle": 0.00004868383823986022,
+    "samples": 10000,
+    "sampleMs": 0.001047980000000001
+  },
+  {
+    "circuit": "spa",
+    "buildMs": 22.158799999999985,
+    "minCarMarginMetres": 0.7406056012559603,
+    "maxKnotAngle": 0.00007370307142995358,
+    "samples": 10000,
+    "sampleMs": 0.0019088999999999998
+  }
+]

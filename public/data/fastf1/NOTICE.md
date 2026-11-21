@@ -15,3 +15,9 @@ Model `apex-ridge-filtered-2` uses numeric sector consistency, known pit/out-lap
 Starter model split: train 2023 Spa/Monza/Suzuka and 2024 Suzuka; validate/tune on 2024 Spa; hold out 2024 Monza. Data and model lineage are included in the files. Metrics describe this conditional lap cohort, not finishing-order or future-race accuracy. No source artwork, logos, audio, video or proprietary circuit models are included.
 
 Reproduction (developer only): `python scripts/build_openf1_library.py`, then `node scripts/build-starter-model.mjs`. Raw responses are cached under ignored `work/openf1-cache`; snapshots are served by the website, so ordinary visitors never need these commands, an API account, Python, FastF1 authentication or a local server.
+
+## Expanded library — 19 November 2026
+
+Eight additional 2019–2022 races are adapted from TracingInsights-Archive FastF1 exports. The fourteen-race library contains 12,561 real lap observations. Original accuracy/deletion/status flags are retained for these FastF1 files. Their original repository MIT notice is retained in TRACINGINSIGHTS-LICENSE.txt; this is not an assertion of commercial rights to underlying F1 timing data. Source URLs, dates and hashes are recorded per archive. The original six OpenF1 snapshots retain their CC BY-NC-SA 4.0 terms. Combined OpenF1-derived model/evaluation/report artifacts retain CC BY-NC-SA 4.0.
+
+The expanded benchmark holds out 2024 Suzuka, Spa and Monza after development-only chronological model comparisons. See model-benchmark.json and docs/TRACK_AND_PREDICTION_FIXES.md. Its broader test does not show regression outperforming the baseline. No calibrated probability intervals, future observations or fabricated telemetry are included.
